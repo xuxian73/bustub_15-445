@@ -47,6 +47,13 @@ class LRUReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
+  size_t size;
+  std::vector<int> value;
+  std::vector<bool> exist;
+  std::vector<bool> pinned;
+  std::mutex mu;
+  int cur;
+
 };
 
 }  // namespace bustub
