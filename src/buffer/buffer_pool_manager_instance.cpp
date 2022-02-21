@@ -68,11 +68,11 @@ void BufferPoolManagerInstance::FlushAllPgsImp() {
   // You can do it!
   frame_id_t frame_id;
   std::lock_guard<std::mutex> guard(latch_);
-  for (auto iter = page_table_.begin(); iter != page_table_.end(); ++iter) {
-    frame_id = iter->second;
+  for (auto iter : page_table_) {
+    frame_id = iter.second;
     pages_[frame_id].WLatch();
     if (pages_->IsDirty()) {
-      disk_manager_->WritePage(iter->first, pages_[frame_id].GetData());
+      disk_manager_->WritePage(iter.first, pages_[frame_id].GetData());
       pages_->is_dirty_ = false;
     }
     pages_[frame_id].WUnlatch();
@@ -107,16 +107,16 @@ Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
   return nullptr;
 found:
   page_id_t pid = AllocatePage();
-  Page* page_ = pages_ + frame_id;
+  Page *page = pages_ + frame_id;
   page_table_[pid] = frame_id;
-  page_->WLatch();
-  page_->ResetMemory();
-  page_->is_dirty_ = true;
-  page_->page_id_ = pid;
-  page_->pin_count_ = 1;
-  page_->WUnlatch();
+  page->WLatch();
+  page->ResetMemory();
+  page->is_dirty_ = true;
+  page->page_id_ = pid;
+  page->pin_count_ = 1;
+  page->WUnlatch();
   *page_id = pid;
-  return page_;
+  return page;
 }
 
 Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
@@ -138,6 +138,7 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
   if (!free_list_.empty()) {
     frame_id = free_list_.front();
     free_list_.pop_front();
+    disk_manager_->ReadPage(page_id, pages_[frame_id].GetData());
     goto found;
   }
   if (replacer_->Victim(&frame_id)) {
@@ -148,15 +149,15 @@ Page *BufferPoolManagerInstance::FetchPgImp(page_id_t page_id) {
           disk_manager_->WritePage(victim_id, pages_[frame_id].GetData());
         }
         page_table_.erase(iter);
+        disk_manager_->ReadPage(page_id, pages_[frame_id].GetData());
         break;
       }
     }
     goto found;
   }
-  
+
   return nullptr;
 found:
-  disk_manager_->ReadPage(page_id, pages_[frame_id].GetData());
   page_table_[page_id] = frame_id;
   ++pages_[frame_id].pin_count_;
   replacer_->Pin(frame_id);
@@ -188,7 +189,7 @@ bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
   return true;
 }
 
-bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) { 
+bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   std::lock_guard<std::mutex> guard(latch_);
   auto iter = page_table_.find(page_id);
   if (iter != page_table_.end()) {
@@ -199,7 +200,7 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
     }
     return true;
   }
-  return false; 
+  return false;
 }
 
 page_id_t BufferPoolManagerInstance::AllocatePage() {

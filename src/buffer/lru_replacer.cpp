@@ -14,63 +14,64 @@
 #include "common/logger.h"
 namespace bustub {
 
-LRUReplacer::LRUReplacer(size_t num_pages): 
-size(0), value(std::vector<int>(num_pages, 0)), 
-exist(std::vector<bool>(num_pages, false)), pinned(std::vector<bool>(num_pages, false)), cur(0) {}
+LRUReplacer::LRUReplacer(size_t num_pages)
+    : size_(0),
+      value_(std::vector<int>(num_pages, 0)),
+      exist_(std::vector<bool>(num_pages, false)),
+      pinned_(std::vector<bool>(num_pages, false)),
+      cur_(0) {}
 
 LRUReplacer::~LRUReplacer() = default;
 
-bool LRUReplacer::Victim(frame_id_t *frame_id) { 
-    frame_id_t min = INT32_MAX;
-    std::lock_guard<std::mutex> guard(mu);
-    int index = -1;
-    if (size == 0) {
-        frame_id = nullptr;
-        return false;
+bool LRUReplacer::Victim(frame_id_t *frame_id) {
+  frame_id_t min = INT32_MAX;
+  std::lock_guard<std::mutex> guard(mu_);
+  int index = -1;
+  if (size_ == 0) {
+    frame_id = nullptr;
+    return false;
+  }
+  for (size_t i = 0; i < value_.size(); ++i) {
+    if (exist_[i] && !pinned_[i] && value_[i] < min) {
+      index = i;
+      min = value_[i];
     }
-    for (size_t i = 0; i < value.size(); ++i) {
-        if (exist[i] && !pinned[i] && value[i] < min) {
-            index = i;
-            min = value[i];
-        } 
-    }
-    if (index == -1) {
-        return false;
-    }
-    exist[index] = false;
-    value[index] = 0;
-    *frame_id = index;
-    --size;
-    return true; 
+  }
+  if (index == -1) {
+    return false;
+  }
+  exist_[index] = false;
+  value_[index] = 0;
+  *frame_id = index;
+  --size_;
+  return true;
 }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
-    std::lock_guard<std::mutex> guard(mu);
-    if (!exist[frame_id] || pinned[frame_id]) {
-        return;
-    } else {
-        pinned[frame_id] = true;
-        --size;
-    }
+  std::lock_guard<std::mutex> guard(mu_);
+  if (exist_[frame_id] && !pinned_[frame_id]) {
+    pinned_[frame_id] = true;
+    --size_;
+  }
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-    std::lock_guard<std::mutex> guard(mu);
-    if (!exist[frame_id]) {
-        exist[frame_id] = true;
-        value[frame_id] = ++cur;
-        pinned[frame_id] = false;
-        ++size;
-    } else if (pinned[frame_id]) {
-        pinned[frame_id] = false;
-        value[frame_id] = ++cur;
-        ++size;
-    }
+  std::lock_guard<std::mutex> guard(mu_);
+  if (!exist_[frame_id]) {
+    exist_[frame_id] = true;
+    value_[frame_id] = ++cur_;
+    pinned_[frame_id] = false;
+    ++size_;
+  } else if (pinned_[frame_id]) {
+    pinned_[frame_id] = false;
+    value_[frame_id] = ++cur_;
+    ++size_;
+  }
 }
 
-size_t LRUReplacer::Size() { 
-    std::lock_guard<std::mutex> guard(mu);
-    return size;
+size_t LRUReplacer::Size() {
+  std::lock_guard<std::mutex> guard(mu_);
+  return size_;
 }
 
 }  // namespace bustub
