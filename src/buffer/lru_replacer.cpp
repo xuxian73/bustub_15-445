@@ -15,24 +15,27 @@
 namespace bustub {
 
 LRUReplacer::LRUReplacer(size_t num_pages): 
-size(0), value(std::vector<int>(num_pages + 1, 0)), 
-exist(std::vector<bool>(num_pages + 1, false)), pinned(std::vector<bool>(num_pages + 1, false)), cur(0) {}
+size(0), value(std::vector<int>(num_pages, 0)), 
+exist(std::vector<bool>(num_pages, false)), pinned(std::vector<bool>(num_pages, false)), cur(0) {}
 
 LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) { 
     frame_id_t min = INT32_MAX;
     std::lock_guard<std::mutex> guard(mu);
-    int index = 0;
+    int index = -1;
     if (size == 0) {
         frame_id = nullptr;
         return false;
     }
-    for (size_t i = 1; i < value.size(); ++i) {
+    for (size_t i = 0; i < value.size(); ++i) {
         if (exist[i] && !pinned[i] && value[i] < min) {
             index = i;
             min = value[i];
         } 
+    }
+    if (index == -1) {
+        return false;
     }
     exist[index] = false;
     value[index] = 0;
