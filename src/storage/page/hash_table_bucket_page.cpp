@@ -106,7 +106,11 @@ void HASH_TABLE_BUCKET_TYPE::SetReadable(uint32_t bucket_idx) {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::IsFull() {
-  return false;
+  for (size_t i = 0; i < BUCKET_ARRAY_SIZE; ++i) {
+    if (~readable_[i]) 
+      return false;
+  }
+  return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
@@ -116,6 +120,10 @@ uint32_t HASH_TABLE_BUCKET_TYPE::NumReadable() {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::IsEmpty() {
+  for (size_t i = 0; i < BUCKET_ARRAY_SIZE; ++i) {
+    if (readable_[i])
+      return true;
+  }
   return false;
 }
 
