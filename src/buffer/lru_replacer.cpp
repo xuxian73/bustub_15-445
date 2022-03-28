@@ -15,63 +15,46 @@
 namespace bustub {
 
 LRUReplacer::LRUReplacer(size_t num_pages)
-    : size_(0),
-      value_(std::vector<int>(num_pages, 0)),
-      exist_(std::vector<bool>(num_pages, false)),
-      pinned_(std::vector<bool>(num_pages, false)),
-      cur_(0) {}
+    : frame2iter_{num_pages} {}
 
 LRUReplacer::~LRUReplacer() = default;
 
 bool LRUReplacer::Victim(frame_id_t *frame_id) {
-  frame_id_t min = INT32_MAX;
-  std::lock_guard<std::mutex> guard(mu_);
-  int index = -1;
-  if (size_ == 0) {
-    frame_id = nullptr;
+  std::lock_guard<std::mutex> guard(latch_);
+  if (list_.empty()) {
+    *frame_id = INVALID_PAGE_ID;
     return false;
   }
-  for (size_t i = 0; i < value_.size(); ++i) {
-    if (exist_[i] && !pinned_[i] && value_[i] < min) {
-      index = i;
-      min = value_[i];
-    }
-  }
-  if (index == -1) {
-    return false;
-  }
-  exist_[index] = false;
-  value_[index] = 0;
-  *frame_id = index;
-  --size_;
+  *frame_id = list_.back();
+  list_.pop_back();
+  frame2iter_[*frame_id] = std::list<frame_id_t>::iterator{};
   return true;
 }
 
 void LRUReplacer::Pin(frame_id_t frame_id) {
-  std::lock_guard<std::mutex> guard(mu_);
-  if (exist_[frame_id] && !pinned_[frame_id]) {
-    pinned_[frame_id] = true;
-    --size_;
+  std::lock_guard<std::mutex> guard(latch_);
+  if (!IsInList(frame_id)) {
+    return;
   }
+  list_.erase(frame2iter_[frame_id]);
+  frame2iter_[frame_id] = std::list<frame_id_t>::iterator{};
 }
 
 void LRUReplacer::Unpin(frame_id_t frame_id) {
-  std::lock_guard<std::mutex> guard(mu_);
-  if (!exist_[frame_id]) {
-    exist_[frame_id] = true;
-    value_[frame_id] = ++cur_;
-    pinned_[frame_id] = false;
-    ++size_;
-  } else if (pinned_[frame_id]) {
-    pinned_[frame_id] = false;
-    value_[frame_id] = ++cur_;
-    ++size_;
+  std::lock_guard<std::mutex> guard(latch_);
+  if (!IsInList(frame_id)) {
+    list_.push_front(frame_id);
+    frame2iter_[frame_id] = list_.begin();
   }
 }
 
 size_t LRUReplacer::Size() {
-  std::lock_guard<std::mutex> guard(mu_);
-  return size_;
+  std::lock_guard<std::mutex> guard(latch_);
+  return list_.size();
+}
+
+bool LRUReplacer::IsInList(frame_id_t frame_id) {
+  return frame2iter_[frame_id] != std::list<frame_id_t>::iterator{};
 }
 
 }  // namespace bustub

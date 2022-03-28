@@ -47,12 +47,16 @@ class LRUReplacer : public Replacer {
 
  private:
   // TODO(student): implement me!
-  size_t size_;
-  std::vector<int> value_;
-  std::vector<bool> exist_;
-  std::vector<bool> pinned_;
-  std::mutex mu_;
-  int cur_;
+  /**
+   * Check if the page is in Replacer's list.
+   * @param frame_id the frame id
+   * @return true if the page is in the list, false otherwise
+   */
+  bool IsInList(frame_id_t frame_id);
+
+  std::list<frame_id_t> list_;
+  std::vector<std::list<frame_id_t>::iterator> frame2iter_;
+  std::mutex latch_;
 };
 
 }  // namespace bustub
