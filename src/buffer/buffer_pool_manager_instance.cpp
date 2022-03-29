@@ -60,7 +60,7 @@ bool BufferPoolManagerInstance::FlushPgImp(page_id_t page_id) {
     frame_id = iter->second;
     pages_[frame_id].RLatch();
     if (pages_[frame_id].is_dirty_) {
-      disk_manager_->WritePage(page_id, pages_[frame_id].data_); 
+      disk_manager_->WritePage(page_id, pages_[frame_id].data_);
     }
     pages_[frame_id].is_dirty_ = false;
     pages_[frame_id].RUnlatch();

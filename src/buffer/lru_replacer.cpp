@@ -14,8 +14,7 @@
 #include "common/logger.h"
 namespace bustub {
 
-LRUReplacer::LRUReplacer(size_t num_pages)
-    : frame2iter_{num_pages} {}
+LRUReplacer::LRUReplacer(size_t num_pages) : frame2iter_{num_pages} {}
 
 LRUReplacer::~LRUReplacer() = default;
 

@@ -138,7 +138,7 @@ class ExtendibleHashTable {
 
   /**
    * Fetches data from a page contain bucket page
-   * 
+   *
    * @param page the page fetched from
    * @return a pointer to a bucket page
    */
