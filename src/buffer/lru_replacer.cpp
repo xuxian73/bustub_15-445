@@ -52,8 +52,6 @@ size_t LRUReplacer::Size() {
   return list_.size();
 }
 
-bool LRUReplacer::IsInList(frame_id_t frame_id) {
-  return frame2iter_[frame_id] != std::list<frame_id_t>::iterator{};
-}
+bool LRUReplacer::IsInList(frame_id_t frame_id) { return frame2iter_[frame_id] != std::list<frame_id_t>::iterator{}; }
 
 }  // namespace bustub

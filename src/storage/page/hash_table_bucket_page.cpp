@@ -25,7 +25,7 @@ bool HASH_TABLE_BUCKET_TYPE::GetValue(KeyType key, KeyComparator cmp, std::vecto
     if (!IsOccupied(i)) {
       break;
     }
-    if (IsReadable(i) && !cmp(array_[i].first, key)) {
+    if (IsReadable(i) && cmp(array_[i].first, key) == 0) {
       result->push_back(array_[i].second);
     }
   }
@@ -36,12 +36,15 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::Insert(KeyType key, ValueType value, KeyComparator cmp) {
   int hole = -1;
   for (uint32_t i = 0; i < BUCKET_ARRAY_SIZE; ++i) {
-    if (!IsOccupied(i) && hole == -1) {
-      hole = i;
+    if (!IsOccupied(i)) {
+      if (hole == -1) {
+        hole = i;
+      }
       break;
     }
-    if (!IsReadable(i) && hole == -1) {
+    if (!IsReadable(i)) {
       hole = i;
+      continue;
     }
     if (cmp(array_[i].first, key) == 0 && array_[i].second == value) {
       return false;
@@ -62,7 +65,7 @@ bool HASH_TABLE_BUCKET_TYPE::Remove(KeyType key, ValueType value, KeyComparator 
     if (!IsOccupied(i)) {
       break;
     }
-    if (IsReadable(i) && !cmp(array_[i].first, key) && array_[i].second == value) {
+    if (IsReadable(i) && cmp(array_[i].first, key) == 0 && array_[i].second == value) {
       RemoveAt(i);
       return true;
     }
@@ -107,8 +110,13 @@ void HASH_TABLE_BUCKET_TYPE::SetReadable(uint32_t bucket_idx) {
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::IsFull() {
-  for (size_t i = 0; i < (BUCKET_ARRAY_SIZE - 1) / 8 + 1; ++i) {
+  for (size_t i = 0; i < (BUCKET_ARRAY_SIZE - 1) / 8; ++i) {
     if (~readable_[i]) {
+      return false;
+    }
+  }
+  for (size_t i = BUCKET_ARRAY_SIZE - BUCKET_ARRAY_SIZE % 8; i < BUCKET_ARRAY_SIZE; ++i) {
+    if (!this->IsReadable(i)) {
       return false;
     }
   }
@@ -124,10 +132,10 @@ template <typename KeyType, typename ValueType, typename KeyComparator>
 bool HASH_TABLE_BUCKET_TYPE::IsEmpty() {
   for (size_t i = 0; i < (BUCKET_ARRAY_SIZE - 1) / 8 + 1; ++i) {
     if (readable_[i]) {
-      return true;
+      return false;
     }
   }
-  return false;
+  return true;
 }
 
 template <typename KeyType, typename ValueType, typename KeyComparator>
