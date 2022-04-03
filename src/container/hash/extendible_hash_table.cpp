@@ -25,9 +25,7 @@ namespace bustub {
 template <typename KeyType, typename ValueType, typename KeyComparator>
 HASH_TABLE_TYPE::ExtendibleHashTable(const std::string &name, BufferPoolManager *buffer_pool_manager,
                                      const KeyComparator &comparator, HashFunction<KeyType> hash_fn)
-    : buffer_pool_manager_(buffer_pool_manager),
-      comparator_(comparator),
-      hash_fn_(std::move(hash_fn)) {
+    : buffer_pool_manager_(buffer_pool_manager), comparator_(comparator), hash_fn_(std::move(hash_fn)) {
   //  allocate a directory page and a bucket page
   Page *page = buffer_pool_manager->NewPage(&directory_page_id_);
   page_id_t bucket_id;
@@ -165,8 +163,6 @@ bool HASH_TABLE_TYPE::SplitInsert(Transaction *transaction, const KeyType &key, 
     page_id_t new_page_id;
     Page *new_page = buffer_pool_manager_->NewPage(&new_page_id);
     HASH_TABLE_BUCKET_TYPE *new_bucket;
-    assert(directory_page->GetBucketPageId(ind) == directory_page->GetBucketPageId(buddy_ind));
-    assert(directory_page->GetLocalDepth(ind) == directory_page->GetLocalDepth(buddy_ind));
     uint32_t common_bit = ind & directory_page->GetLocalDepthMask(ind);
     uint32_t ld = directory_page->GetLocalDepth(ind);
     for (size_t i = common_bit; i < directory_page->Size(); i += 1 << ld) {
