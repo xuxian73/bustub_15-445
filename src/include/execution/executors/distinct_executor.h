@@ -13,26 +13,26 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
-#include <unordered_map>
 
+#include "common/util/hash_util.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/distinct_plan.h"
-#include "common/util/hash_util.h"
 
 namespace bustub {
 
 /** The hash of a tuple. */
 struct DistinctKey {
-  std::vector<Value> keys;
+  std::vector<Value> keys_;
 
   bool operator==(const DistinctKey &other) const {
-    if (keys.size() != other.keys.size()) {
+    if (keys_.size() != other.keys_.size()) {
       return false;
     }
-    for (size_t i = 0; i < keys.size(); i++) {
-      if (keys[i].CompareEquals(other.keys[i]) != CmpBool::CmpTrue) {
+    for (size_t i = 0; i < keys_.size(); i++) {
+      if (keys_[i].CompareEquals(other.keys_[i]) != CmpBool::CmpTrue) {
         return false;
       }
     }
@@ -79,15 +79,14 @@ class DistinctExecutor : public AbstractExecutor {
 }  // namespace bustub
 
 namespace std {
-  template <>
-  struct hash<bustub::DistinctKey> {
-    size_t operator()(const bustub::DistinctKey &hash) const {
-      bustub::hash_t hash_val = 0;
-      for (const auto &key : hash.keys) {
-        bustub::HashUtil::CombineHashes(bustub::HashUtil::Hash(&key), hash_val);
-      }
-      return hash_val;
+template <>
+struct hash<bustub::DistinctKey> {
+  size_t operator()(const bustub::DistinctKey &hash) const {
+    bustub::hash_t hash_val = 0;
+    for (const auto &key : hash.keys_) {
+      bustub::HashUtil::CombineHashes(bustub::HashUtil::Hash(&key), hash_val);
     }
-  };  
-} // namespace std
-
+    return hash_val;
+  }
+};
+}  // namespace std

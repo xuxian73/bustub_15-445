@@ -24,24 +24,23 @@ bool DistinctExecutor::Next(Tuple *tuple, RID *rid) {
   while (child_executor_->Next(tuple, rid)) {
     DistinctKey key;
     for (size_t i = 0; i < plan_->OutputSchema()->GetColumnCount(); ++i) {
-      key.keys.push_back(tuple->GetValue(plan_->OutputSchema(), i));
+      key.keys_.push_back(tuple->GetValue(plan_->OutputSchema(), i));
     }
     hash_t hash_value = std::hash<DistinctKey>()(key);
     if (produced_.find(hash_value) == produced_.end()) {
       produced_.insert({hash_value, {key}});
       return true;
-    } else {
-      bool isExist = false;
-      for (auto &exist_key : produced_[hash_value]) {
-        if (exist_key == key) {
-          isExist = true;
-          break;
-        }
+    }
+    bool is_exist = false;
+    for (auto &exist_key : produced_[hash_value]) {
+      if (exist_key == key) {
+        is_exist = true;
+        break;
       }
-      if (!isExist) {
-        produced_[hash_value].push_back(key);
-        return true;
-      }
+    }
+    if (!is_exist) {
+      produced_[hash_value].push_back(key);
+      return true;
     }
   }
   return false;

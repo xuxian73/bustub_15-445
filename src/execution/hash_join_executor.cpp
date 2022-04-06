@@ -42,17 +42,16 @@ void HashJoinExecutor::Init() {
       left_ht_[key].push_back(values);
     }
   }
-  left_child_->Init();
 }
 
 bool HashJoinExecutor::Next(Tuple *tuple, RID *rid) {
   while (true) {
     if (pos_ == -1) {
-      if (!right_child_->Next(tuple, rid)) {
+      if (!right_child_->Next(&right_tuple_, &right_rid_)) {
         return false;
       }
     }
-    auto right_key = plan_->RightJoinKeyExpression()->Evaluate(tuple, plan_->GetRightPlan()->OutputSchema());
+    auto right_key = plan_->RightJoinKeyExpression()->Evaluate(&right_tuple_, plan_->GetRightPlan()->OutputSchema());
     auto iter = left_ht_.find(HashJoinKey{right_key});
     if (iter == left_ht_.end()) {
       pos_ = -1;
@@ -66,7 +65,7 @@ bool HashJoinExecutor::Next(Tuple *tuple, RID *rid) {
             if (expr->GetTupleIdx() == 0) {
               values.push_back(iter->second[pos_][expr->GetColIdx()]);
             } else {
-              values.push_back(tuple->GetValue(plan_->GetRightPlan()->OutputSchema(), expr->GetColIdx()));
+              values.push_back(right_tuple_.GetValue(plan_->GetRightPlan()->OutputSchema(), expr->GetColIdx()));
             }
           }
           *tuple = Tuple(values, plan_->OutputSchema());

@@ -1,4 +1,5 @@
-if [ $1 == '0' ]; then
+if [ $1 == '0' ]
+then
     zip project0-submission.zip src/include/primer/p0_starter.h
 fi
 
@@ -30,7 +31,7 @@ then
     src/include/storage/page/tmp_tuple_page.h
 fi
 
-if [$1 == '3']
+if [ $1 == '3' ]
 then
     zip project3-submission.zip \
     src/include/buffer/lru_replacer.h \
@@ -61,5 +62,7 @@ then
     src/execution/hash_join_executor.cpp \
     src/execution/aggregation_executor.cpp \
     src/execution/limit_executor.cpp \
-    src/execution/distinct_executor.cpp
+    src/execution/distinct_executor.cpp \
+    src/include/storage/page/tmp_tuple_page.h
+
 fi

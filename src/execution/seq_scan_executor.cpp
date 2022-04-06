@@ -15,10 +15,11 @@
 namespace bustub {
 
 SeqScanExecutor::SeqScanExecutor(ExecutorContext *exec_ctx, const SeqScanPlanNode *plan)
-    : AbstractExecutor(exec_ctx), plan_(plan), cur_(nullptr, RID{}, nullptr), end_(nullptr, RID{}, nullptr) {}
+    : AbstractExecutor(exec_ctx), plan_(plan), cur_(nullptr, RID{}, nullptr), end_(nullptr, RID{}, nullptr) {
+  table_info_ = exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid());
+}
 
 void SeqScanExecutor::Init() {
-  table_info_ = exec_ctx_->GetCatalog()->GetTable(plan_->GetTableOid());
   cur_ = table_info_->table_->Begin(exec_ctx_->GetTransaction());
   end_ = table_info_->table_->End();
 }
@@ -41,7 +42,8 @@ ok:
   std::vector<Value> values;
   auto output_schema = GetOutputSchema();
   for (auto &col : output_schema->GetColumns()) {
-    auto value = cur_->GetValue(&table_info_->schema_, table_info_->schema_.GetColIdx(col.GetName()));
+    auto expr = col.GetExpr();
+    Value value = expr->Evaluate(&(*cur_), &table_info_->schema_);
     values.push_back(value);
   }
   *tuple = Tuple(values, output_schema);

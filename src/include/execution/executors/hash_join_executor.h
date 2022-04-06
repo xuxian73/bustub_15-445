@@ -28,18 +28,18 @@ namespace bustub {
 /** HashKey represents a key in the hash table. */
 struct HashJoinKey {
   /** The key. */
-  Value key;
+  Value key_;
 
   /** The constructor. */
-  HashJoinKey() : key() {}
-  explicit HashJoinKey(Value k) : key(k) {}
+  HashJoinKey() = default;
+  explicit HashJoinKey(const Value &k) : key_(k) {}
 
   /**
    * Compares two aggregate keys for equality.
    * @param other the other aggregate key to be compared with
    * @return `true` if both aggregate keys have equivalent group-by expressions, `false` otherwise
    */
-  bool operator==(const HashJoinKey &other) const { return key.CompareEquals(other.key) == CmpBool::CmpTrue; }
+  bool operator==(const HashJoinKey &other) const { return key_.CompareEquals(other.key_) == CmpBool::CmpTrue; }
 };
 }  // namespace bustub
 
@@ -51,7 +51,7 @@ namespace std {
  */
 template <>
 struct hash<bustub::HashJoinKey> {
-  size_t operator()(const bustub::HashJoinKey &key) const { return bustub::HashUtil::HashValue(&key.key); }
+  size_t operator()(const bustub::HashJoinKey &key) const { return bustub::HashUtil::HashValue(&key.key_); }
 };
 }  // namespace std
 
@@ -97,6 +97,10 @@ class HashJoinExecutor : public AbstractExecutor {
   std::unordered_map<HashJoinKey, std::vector<std::vector<Value>>> left_ht_;
   /** The current position in the left child hash table bucket. */
   int32_t pos_;
+  /** The current tuple of right child. */
+  Tuple right_tuple_;
+  /** The current RID of right child. */
+  RID right_rid_;
 };
 
 }  // namespace bustub
