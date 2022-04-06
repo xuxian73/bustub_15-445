@@ -14,11 +14,31 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
+#include <unordered_map>
 
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/distinct_plan.h"
+#include "common/util/hash_util.h"
 
 namespace bustub {
+
+/** The hash of a tuple. */
+struct DistinctKey {
+  std::vector<Value> keys;
+
+  bool operator==(const DistinctKey &other) const {
+    if (keys.size() != other.keys.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < keys.size(); i++) {
+      if (keys[i].CompareEquals(other.keys[i]) != CmpBool::CmpTrue) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
 
 /**
  * DistinctExecutor removes duplicate rows from child ouput.
@@ -53,5 +73,21 @@ class DistinctExecutor : public AbstractExecutor {
   const DistinctPlanNode *plan_;
   /** The child executor from which tuples are obtained */
   std::unique_ptr<AbstractExecutor> child_executor_;
+  /** The hash of tuple already produced */
+  std::unordered_map<hash_t, std::vector<DistinctKey>> produced_;
 };
 }  // namespace bustub
+
+namespace std {
+  template <>
+  struct hash<bustub::DistinctKey> {
+    size_t operator()(const bustub::DistinctKey &hash) const {
+      bustub::hash_t hash_val = 0;
+      for (const auto &key : hash.keys) {
+        bustub::HashUtil::CombineHashes(bustub::HashUtil::Hash(&key), hash_val);
+      }
+      return hash_val;
+    }
+  };  
+} // namespace std
+

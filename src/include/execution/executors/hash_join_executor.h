@@ -13,12 +13,47 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
+#include "common/util/hash_util.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/hash_join_plan.h"
 #include "storage/table/tuple.h"
+
+namespace bustub {
+
+/** HashKey represents a key in the hash table. */
+struct HashJoinKey {
+  /** The key. */
+  Value key;
+
+  /** The constructor. */
+  HashJoinKey() : key() {}
+  explicit HashJoinKey(Value k) : key(k) {}
+
+  /**
+   * Compares two aggregate keys for equality.
+   * @param other the other aggregate key to be compared with
+   * @return `true` if both aggregate keys have equivalent group-by expressions, `false` otherwise
+   */
+  bool operator==(const HashJoinKey &other) const { return key.CompareEquals(other.key) == CmpBool::CmpTrue; }
+};
+}  // namespace bustub
+
+namespace std {
+/**
+ * A hash function for HashJoinKey.
+ * @param key the key to be hashed
+ * @return the hash value of the key
+ */
+template <>
+struct hash<bustub::HashJoinKey> {
+  size_t operator()(const bustub::HashJoinKey &key) const { return bustub::HashUtil::HashValue(&key.key); }
+};
+}  // namespace std
 
 namespace bustub {
 
@@ -54,6 +89,14 @@ class HashJoinExecutor : public AbstractExecutor {
  private:
   /** The NestedLoopJoin plan node to be executed. */
   const HashJoinPlanNode *plan_;
+  /** The left child executor that produces tuples for the left side of join. */
+  std::unique_ptr<AbstractExecutor> left_child_;
+  /** The right child executor that produces tuples for the right side of join. */
+  std::unique_ptr<AbstractExecutor> right_child_;
+  /** The hash table for the left child. */
+  std::unordered_map<HashJoinKey, std::vector<std::vector<Value>>> left_ht_;
+  /** The current position in the left child hash table bucket. */
+  int32_t pos_;
 };
 
 }  // namespace bustub
